@@ -1,8 +1,15 @@
-Selected recent code samples by Emerson Arehart, PhD candidate at the University of Utah. 
+Selected recent code samples by Emerson Arehart, PhD candidate at the University of Utah.
+
+
 emerson.arehart@utah.edu
 
+Power Analysis and Experimental Design for Salivary Proteins (RS_pwr_analysis.R) << work in progress >>
 
+Our collaborators are designing an experiment in which they maintain a group of rats on a 'control' diet for several days, then switch them to an experimental diet. Each day, a saliva sample is taken from each rat and assessed for the volume of each size class of protein. We will be building a functional model of the processes which underpin the change in salival protein profile associated with each diet, but for now (in this code) I use data from previous experiments to build generalized additive models of the change in volume (for each protein size class) over time, and use a likelihood ratio test to compute the appropriate p-value. By re-sampling the individuals from the data set at different sample sizes, I can determine the minimum sample size needed to obtain significant results for all bands.
 
+Simulation of a Population of Wild-Harvested Mushrooms Under Habitat Change (loyo_example.R) << work in progress >>
+
+This code models the population dynamics of Boletus loyo, an archetypal wild edible mushroom endemic to the Patagonian forests of Chile, where it is an obligate mycorrhizal symbiont of Nothofagus trees. Our model incorporates the effects of spatial distribution and genetic diversity to model the growth and spread (or decline) of a population of B. loyo, under various harvesting strategies and habitat change scenarios. By parameterizing the model with data from the field, we hope to determine which harvesting strategies are most sustainable under different climate change scenarios. 
 
 Glomerulus - Kenyon Distance Metrics (gk_distance.R) << work in progress >>
 
