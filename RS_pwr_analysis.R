@@ -77,64 +77,57 @@ ggplot(data = melt(sd/sqrt(8)), aes(x=Var1, y=Var2, fill=value)) +
   labels = c(1:11)) + scale_y_discrete(name = "Protein Band", breaks = c(1:12), labels = c(13,16.5,18.5,19,23,25,34,42,65,75,100,211)) 
 
 
-
 #
-# POWER ANALYSIS / MODEL COMPARISON
+# POWER ANALYSIS
 #
 
-bpv <- function(dfb){
+
+
+# Sample the data (pull x individuals)
+
+samp <- function(x){  # returns long format of x random animals
+    popdex <- sample(7,x,replace =TRUE) # draw from real animals
+    #print(popdex)
+    scaling <- rgamma(x,3.5,5) #!!!!!!!!!!!!!!!
+    #print(scaling)
+    
+    # turn data into 'long' and add diet:
+    df <- melt(vols[popdex,,]*scaling)
+    df <- cbind(ifelse(df$Var2<5,0,1),df)
+    names(df) <- c("diet", "id","day","band", "volume")
+    df$volume <- log(df$volume)
+    return(df)
+  }
+
+# multiply existing samples by something between, say, .5 and 2, to reduce or exaggerate effect size
+
+corr <- function(d){
+  m1 <-  gam(volume ~ s(day) + s(id, bs="re"), data=d) # volumes are already log()
+  m0 <-  gam(volume ~    1   + s(id, bs="re"), data=d)
+  d$m1 <- m1$fitted.values
+  d$vc <- d$volume - d$m1
   pvec <- NA
   for(i in 1:12){
-    m1<-  gam(log(volume) ~ s(day) + s(id, bs="re"), data=dfb[dfb$band==i,])
-    m0<-  gam(log(volume) ~    1   + s(id, bs="re"), data=dfb[dfb$band==i,])
-    pvec[i] <- anova(m1,m0,test="Chisq")$`Pr(>Chi)`[2]
+    m1c <-  gam(vc ~ s(day) + s(id, bs="re"), data=d[d$band==i,])
+    m0c <-  gam(vc ~    1   + s(id, bs="re"), data=d[d$band==i,])
+    pvec[i] <- anova(m1c,m0c,test="Chisq")$`Pr(>Chi)`[2]
   }
-  return(pvec)
+  return(pvec) # returns the p-values for each band, after subtracting the overall trend for the dataset.
 }
 
-# turn data into 'long' and add diet:
-df <- melt(vols)
-df <- cbind(ifelse(df$Var2<5,0,1),df)
-names(df) <- c("diet", "id","day","band", "volume")
+colors <- colorRampPalette(c("yellow", "red","blue"))(20)
 
-
-#
-# Model comparison approach - randomly sample x individuals from 8 real individuals, re-ID them
-# and then build the null vs s(day) models and perform a likelihood ratio test:
-#
-
-assess <- function(x){  # returns p-values for each of the 12 bands on a sample of x individual rats
-  opts <- c(1,2,3,4,5,6,8)
-  popdex <- sample(opts,x,replace =TRUE)
-  
-  # turn data into 'long' and add diet:
-  dft <- melt(vols[popdex,,])
-  dft <- cbind(ifelse(dft$Var2<5,0,1),dft)
-  names(dft) <- c("diet", "id","day","band", "volume")
-  
-  return(bpv(dft))
-}
-
-pv <- function(sampnum,reps){
-  par <- matrix(0,nrow=reps,ncol=12)
-  for(i in 1:reps){
-    par[i,]<- assess(sampnum)
-  }
-  
-  # visualize:
-  plot(colMeans(par),pch=20,col="blue",main="P-val per band", xlab="Band", ylab="p-val LRT", ylim=c(0,.055))
+w <- function(x){
+  plot(NA,main=paste("n = ",x), xlab="Band", ylab="p-val LRT", xlim=c(1,12),ylim=c(0,.06)) # max(a)
+  abline(h=.001,col="orange")
   abline(h=.05,col="red")
-  cat("\n# under .05: ", sum(colMeans(par)<.05))
-  return(sum(colMeans(par)<.001))
+  for(i in 1:10){
+    a <- corr(samp(x))
+    points(a,pch=20,col=i)
+  }
 }
 
-# Test across a range of x values and plot the result:
-
-testrange <- c(2:25)
-scores <- vector()
-for(z in testrange){ # min val = 2
-  scores<- c(scores,pv(z,10))
+plot(NA, xlab="Band", ylab="p-val LRT", xlim=c(1,12),ylim=c(0,.06)) # max(a)
+for(j in 10:20){
+  w(j)
 }
-
-plot(x=testrange, y=scores,pch=20,col="orange", main="P-val vs Sample Size", xlab="# rats", ylab="p-val LRT",ylim=c(0,13))
-abline(h=12,col="blue")
